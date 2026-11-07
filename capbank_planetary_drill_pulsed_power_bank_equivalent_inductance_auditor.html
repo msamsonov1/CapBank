@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CapBank: Planetary Drill Pulsed-Power Bank Equivalent Inductance Auditor</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- MathJax v3 (Pre-configured) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #05070d;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .formula-box {
+      background-color: #030712;
+      border: 1px solid #1f2937;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      color: #67e8f9;
+      font-size: 0.9rem;
+      overflow-x: auto;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 18px -3px rgba(6, 182, 212, 0.45);
+    }
+    .glow-rose {
+      box-shadow: 0 0 20px -3px rgba(244, 63, 94, 0.5);
+    }
+    .glow-amber {
+      box-shadow: 0 0 18px -3px rgba(245, 158, 11, 0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#05070d] text-slate-200">
+
+  <!-- TOP HEADER / TELEMETRY BANNER -->
+  <header class="border-b border-gray-800 bg-[#080c14]/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-cyan-950 border border-cyan-500/40 flex items-center justify-center glow-cyan">
+          <i data-lucide="zap" class="w-6 h-6 text-cyan-400"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono tracking-widest text-cyan-400 font-bold uppercase">NASA SBIR/STTR Subsurface Percussive</span>
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+          </div>
+          <h1 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            CapBank <span class="text-gray-400 font-normal text-xs sm:text-sm">| Planetary Drill Pulsed-Power Equivalent Auditor</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Quick Telemetry Chips -->
+      <div class="flex items-center flex-wrap gap-2 text-xs font-mono">
+        <div class="bg-gray-900/80 px-2.5 py-1 rounded border border-gray-800 flex items-center space-x-1.5">
+          <span class="text-gray-400">STATE:</span>
+          <span id="chipBankStatus" class="text-emerald-400 font-semibold flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> BALANCED
+          </span>
+        </div>
+        <div class="bg-gray-900/80 px-2.5 py-1 rounded border border-gray-800 flex items-center space-x-1.5">
+          <span class="text-gray-400">CAP:</span>
+          <span id="chipCapValue" class="text-cyan-300 font-bold">120.0 µF</span>
+        </div>
+        <div class="bg-gray-900/80 px-2.5 py-1 rounded border border-gray-800 flex items-center space-x-1.5">
+          <span class="text-gray-400">IND:</span>
+          <span id="chipIndValue" class="text-purple-300 font-bold">14.2 nH</span>
+        </div>
+        <div class="bg-gray-900/80 px-2.5 py-1 rounded border border-gray-800 flex items-center space-x-1.5">
+          <span class="text-gray-400">DISCHARGE RINGING:</span>
+          <span id="chipFreqValue" class="text-amber-300 font-bold">121.9 kHz</span>
+        </div>
+        <div class="bg-gray-900/80 px-2.5 py-1 rounded border border-gray-800 flex items-center space-x-1.5">
+          <span class="text-gray-400">DRILL PRF:</span>
+          <span id="chipPrfValue" class="text-white font-bold">45.0 Hz</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 border-t border-gray-800/80 flex space-x-1 overflow-x-auto">
+      <button id="tabBtnSim" onclick="switchTab('sim')" class="px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-cyan-400 text-cyan-300 flex items-center gap-2 transition-colors whitespace-nowrap">
+        <i data-lucide="activity" class="w-4 h-4"></i> Live Simulation & Phase-Space HUD
+      </button>
+      <button id="tabBtnPhysics" onclick="switchTab('physics')" class="px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 flex items-center gap-2 transition-colors whitespace-nowrap">
+        <i data-lucide="atom" class="w-4 h-4"></i> Physics & LC State Observer
+      </button>
+      <button id="tabBtnProposal" onclick="switchTab('proposal')" class="px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 flex items-center gap-2 transition-colors whitespace-nowrap">
+        <i data-lucide="file-text" class="w-4 h-4"></i> NASA SBIR/STTR Proposal ($225k)
+      </button>
+      <button id="tabBtnARR" onclick="switchTab('arr')" class="px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 flex items-center gap-2 transition-colors whitespace-nowrap">
+        <i data-lucide="trending-up" class="w-4 h-4"></i> Civil Commercialization ($218M ARR)
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: LIVE SIMULATION & TELEMETRY HUD                                    -->
+    <!-- ========================================================================= -->
+    <div id="viewSim" class="space-y-6">
+      
+      <!-- Top Alert Notification Bar (Dynamic State Observer) -->
+      <div id="observerNotification" class="hidden rounded-xl border border-rose-500/50 bg-rose-950/40 p-4 glow-rose transition-all flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-start md:items-center space-x-3">
+          <div class="p-2 rounded-lg bg-rose-900/60 text-rose-300 animate-bounce">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-rose-200 flex items-center gap-2">
+              <span>CRITICAL RESONANT DECOUPLING DETECTED</span>
+              <span class="text-xs font-mono bg-rose-900/80 px-2 py-0.5 rounded text-rose-200 border border-rose-700">AUTONOMOUS DERATING ACTIVE</span>
+            </h3>
+            <p id="observerMessage" class="text-xs text-rose-300/80 mt-0.5">
+              Sector detachment detected in bank module #3. Loop inductance shifted +2.8 nH while capacitance dropped 24 µF. Driver pulse repetition frequency derated by 60% to suppress peak terminal $V_{\text{peak}} = V_0 \sqrt{L/C}$ overvoltage spike.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2 shrink-0">
+          <button onclick="restoreBankModules()" class="px-3 py-1.5 text-xs font-mono font-medium rounded bg-rose-600 hover:bg-rose-500 text-white transition-colors flex items-center gap-1.5 shadow">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Service/Hot-Swap Bank
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Operational Row: Canvas Drill Hardware & Interactive Phase-Space Plot -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Drilling & Discharge Hardware Visualizer (7 Cols) -->
+        <div class="lg:col-span-7 bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Subsurface Percussive Bit & Capacitor Core Stage</span>
+            </div>
+            <div class="flex items-center space-x-2 text-xs font-mono">
+              <span class="text-gray-400">DISCHARGE RINGING PULSE:</span>
+              <span id="dischargePulseIndicator" class="px-1.5 py-0.5 rounded text-emerald-300 bg-emerald-950 border border-emerald-700">STROBE READY</span>
+            </div>
+          </div>
+
+          <!-- HTML5 Canvas: Cryo-Regolith Drill & Pulsed-Power Core Bank -->
+          <div class="relative w-full bg-[#03050a] rounded-lg border border-gray-900 overflow-hidden" style="min-height: 290px;">
+            <canvas id="drillCanvas" class="w-full h-full block"></canvas>
+            <div class="absolute bottom-2 left-2 bg-gray-950/80 backdrop-blur px-2 py-1 rounded border border-gray-800 text-[11px] font-mono text-gray-400">
+              Regolith: <span class="text-cyan-300">Lunar Basalt (Cryo 95K)</span> | Shock Impact: <span id="canvasImpactJoules" class="text-amber-300">450 J/pulse</span>
+            </div>
+            <div class="absolute top-2 right-2 bg-gray-950/80 backdrop-blur px-2 py-1 rounded border border-gray-800 text-[11px] font-mono flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400" id="bankIndicatorDot"></span>
+              <span id="canvasModuleStatus" class="text-cyan-300">12/12 Film Sectors Intact</span>
+            </div>
+          </div>
+
+          <!-- Hardware Status Bar -->
+          <div class="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-gray-800 text-xs font-mono">
+            <div class="bg-gray-900/60 p-2 rounded border border-gray-800/80">
+              <div class="text-gray-400 text-[10px]">TRANSIENT CURRENT ($I_{\text{peak}}$)</div>
+              <div id="statIpeak" class="text-sm font-bold text-cyan-400 mt-0.5">8.42 kA</div>
+            </div>
+            <div class="bg-gray-900/60 p-2 rounded border border-gray-800/80">
+              <div class="text-gray-400 text-[10px]">DYNAMIC OVERVOLTAGE ($V_{\text{terminal}}$)</div>
+              <div id="statVpeak" class="text-sm font-bold text-emerald-400 mt-0.5">3.12 kV <span class="text-[10px] text-gray-500 font-normal">(Safe)</span></div>
+            </div>
+            <div class="bg-gray-900/60 p-2 rounded border border-gray-800/80">
+              <div class="text-gray-400 text-[10px]">DAMAGING $di/dt$ STRESS</div>
+              <div id="statDiDt" class="text-sm font-bold text-purple-400 mt-0.5">5.92 GA/s</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Diagnostic Phase-Space HUD (5 Cols) -->
+        <!-- Diagnostic Axes: X = Capacitance C (µF) | Y = Loop Inductance L (nH) -->
+        <div class="lg:col-span-5 bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2 border-b border-gray-800 pb-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="crosshair" class="w-4 h-4 text-cyan-400"></i>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Phase-Space: $C$ vs $L$ Trajectory</span>
+            </div>
+            <span class="text-[11px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800">
+              Resonance Inversion
+            </span>
+          </div>
+
+          <p class="text-[11px] text-gray-400 mb-2 leading-relaxed">
+            Continuous cycle auditor evaluating $(C, L)$ coordinate per strike. Foil delamination drops $C$ while lead vibration distortion elongates return loop path, raising $L$.
+          </p>
+
+          <div class="relative w-full flex-grow" style="min-height: 250px;">
+            <canvas id="phaseSpaceChart"></canvas>
+          </div>
+
+          <div class="mt-3 pt-2 border-t border-gray-800 flex items-center justify-between text-[11px] font-mono">
+            <div class="flex items-center space-x-3">
+              <span class="flex items-center gap-1 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Nominal Basin</span>
+              <span class="flex items-center gap-1 text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Dielectric Arc Hazard</span>
+            </div>
+            <span id="currentCoordDisplay" class="text-gray-300 font-semibold">(120.0 µF, 14.2 nH)</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Secondary Telemetry Plots & Driver Closed-Loop Controller Panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Time-Series Ringing Waveform Telemetry (6 Cols) -->
+        <div class="lg:col-span-6 bg-[#080c14] border border-gray-800 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="activity" class="w-4 h-4 text-cyan-400"></i>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Transient LC Ringing Waveform $I(t)$ & $V(t)$</span>
+            </div>
+            <span class="text-[11px] font-mono text-gray-400">Sampling Rate: 200 MSPS</span>
+          </div>
+          <div class="relative w-full" style="height: 200px;">
+            <canvas id="waveformChart"></canvas>
+          </div>
+          <div class="mt-2 text-[11px] font-mono text-gray-400 flex justify-between">
+            <span>Period $T = 2\pi\sqrt{LC}$: <span id="valOscPeriod" class="text-cyan-300">8.2 µs</span></span>
+            <span>Damping $\alpha = R/(2L)$: <span id="valDamping" class="text-amber-300">1.82×10⁵ s⁻¹</span></span>
+          </div>
+        </div>
+
+        <!-- Frequency Shift & Adaptive PRF Tracking (6 Cols) -->
+        <div class="lg:col-span-6 bg-[#080c14] border border-gray-800 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Adaptive PRF Derating & Bank Degradation History</span>
+            </div>
+            <span class="text-[11px] font-mono text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/80">Closed-Loop Failsafe</span>
+          </div>
+          <div class="relative w-full" style="height: 200px;">
+            <canvas id="deratingChart"></canvas>
+          </div>
+          <div class="mt-2 text-[11px] font-mono text-gray-400 flex justify-between">
+            <span>Cumulative Firing Strokes: <span id="valTotalStrokes" class="text-cyan-300 font-bold">14,280</span></span>
+            <span>Remaining Cap Health: <span id="valHealthPercent" class="text-emerald-300 font-bold">100%</span></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Closed-Loop Control & Fault Injection Console -->
+      <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-800 pb-3 mb-4 gap-2">
+          <div>
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-cyan-400"></i>
+              PLANETARY PERCUSSIVE CONTROLLER & FAULT INJECTION BENCH
+            </h2>
+            <p class="text-xs text-gray-400">Simulate lunar/Martian cryo-rock percussion, mechanical lead vibration creep, and sudden metallized foil sector detachment.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-mono text-gray-400">AUTONOMOUS DERATING:</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="toggleAutoDerate" checked class="sr-only peer">
+                <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+              </label>
+            </div>
+            <button onclick="restoreBankModules()" class="px-3 py-1.5 text-xs font-mono rounded bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Bank
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Slider: Penetration Feed Force -->
+          <div class="bg-gray-900/60 p-3 rounded-lg border border-gray-800">
+            <div class="flex justify-between text-xs font-mono mb-1">
+              <span class="text-gray-300">Rock Hardness / Force:</span>
+              <span id="labelHardness" class="text-cyan-400 font-bold">180 MPa (Basalt)</span>
+            </div>
+            <input type="range" id="sliderHardness" min="40" max="320" value="180" step="10" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
+              <span>40 MPa (Tuff)</span>
+              <span>320 MPa (Ilmenite)</span>
+            </div>
+          </div>
+
+          <!-- Slider: Baseline Bank Charge Voltage -->
+          <div class="bg-gray-900/60 p-3 rounded-lg border border-gray-800">
+            <div class="flex justify-between text-xs font-mono mb-1">
+              <span class="text-gray-300">Charging Bus $V_0$:</span>
+              <span id="labelVoltage" class="text-cyan-400 font-bold">2.50 kV</span>
+            </div>
+            <input type="range" id="sliderVoltage" min="1.0" max="4.0" value="2.5" step="0.1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
+              <span>1.0 kV (Low energy)</span>
+              <span>4.0 kV (Overdrive)</span>
+            </div>
+          </div>
+
+          <!-- Slider: Core Operating Temperature -->
+          <div class="bg-gray-900/60 p-3 rounded-lg border border-gray-800">
+            <div class="flex justify-between text-xs font-mono mb-1">
+              <span class="text-gray-300">Cryogenic Temp:</span>
+              <span id="labelTemp" class="text-cyan-400 font-bold">110 K (-163°C)</span>
+            </div>
+            <input type="range" id="sliderTemp" min="40" max="340" value="110" step="5" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
+              <span>40 K (PSR crater)</span>
+              <span>340 K (Lunar noon)</span>
+            </div>
+          </div>
+
+          <!-- Fault Injection Action Buttons -->
+          <div class="bg-gray-900/60 p-3 rounded-lg border border-gray-800 flex flex-col justify-center space-y-2">
+            <span class="text-[11px] font-mono text-gray-400">INJECT HARDWARE FAULT:</span>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="injectFoilDecoupling()" class="px-2 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800/80 rounded text-xs font-mono font-medium transition flex items-center justify-center gap-1">
+                <i data-lucide="zap-off" class="w-3 h-3"></i> Detach Foil
+              </button>
+              <button onclick="injectLeadFatigue()" class="px-2 py-1.5 bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800/80 rounded text-xs font-mono font-medium transition flex items-center justify-center gap-1">
+                <i data-lucide="git-commit" class="w-3 h-3"></i> Lead Fatigue
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: CORE PHYSICS & MATHEMATICAL MODEL                                 -->
+    <!-- ========================================================================= -->
+    <div id="viewPhysics" class="hidden space-y-6">
+      
+      <!-- Top Overview Banner -->
+      <div class="bg-[#080c14] border border-gray-800 rounded-xl p-6">
+        <div class="flex items-center space-x-3 mb-2">
+          <div class="w-8 h-8 rounded bg-cyan-950 border border-cyan-700/50 flex items-center justify-center text-cyan-400">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+          </div>
+          <h2 class="text-lg font-bold text-white tracking-wide">
+            Planetary Subsurface Percussive Discharge & Resonant Inversion Physics
+          </h2>
+        </div>
+        <p class="text-sm text-gray-300 leading-relaxed max-w-4xl">
+          Deep subsurface planetary drills (e.g., Artemis ice exploration, Martian crustal sampling) utilize high-voltage capacitor discharge modules discharging tens of kiloamperes into giant-magnetostrictive or piezoelectric rock-fracturing stacks. Under sustained 10,000g percussive shock waves, capacitor banks suffer progressive internal foil contact degradation. The CapBank software executes a real-time cycle-by-cycle system identification model that audits bank integrity through transient ring-down dynamics.
+        </p>
+      </div>
+
+      <!-- 4 Structured Physics Deep-Dive Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Card 1: Governing LC Resonant Discharge -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 text-sm font-bold mb-2">
+              <i data-lucide="function-square" class="w-4 h-4"></i>
+              <span>1. Damped Underdamped Ringing Dynamics</span>
+            </div>
+            <p class="text-xs text-gray-300 mb-3 leading-relaxed">
+              The primary discharge circuit is modeled as a series RLC transient loop where the capacitor energy discharges across rock-fracturing piezoelectric transducer load:
+            </p>
+            <div class="formula-box">
+              $$L_{\text{loop}} \frac{d^2 i(t)}{dt^2} + R_{\text{esr}} \frac{di(t)}{dt} + \frac{1}{C_{\text{eff}}} i(t) = 0$$
+            </div>
+            <p class="text-xs text-gray-400 my-2">
+              The ringing natural angular frequency $\omega_d$ and damping attenuation coefficient $\alpha$ govern the measured oscilloscope waveform:
+            </p>
+            <div class="formula-box">
+              $$\omega_0 = \frac{1}{\sqrt{L_{\text{loop}} C_{\text{eff}}}}, \quad \alpha = \frac{R_{\text{esr}}}{2 L_{\text{loop}}}, \quad \omega_d = \sqrt{\omega_0^2 - \alpha^2}$$
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+              The peak discharge current attained on initial rock fracturing strike satisfies:
+            </p>
+            <div class="formula-box">
+              $$I_{\text{peak}} \approx V_0 \sqrt{\frac{C_{\text{eff}}}{L_{\text{loop}}}} \exp\left(-\frac{\alpha}{\omega_d}\arctan\left(\frac{\omega_d}{\alpha}\right)\right)$$
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-800/80 text-[11px] font-mono text-cyan-400">
+            Audit Objective: Compute $L_{\text{loop}}$ and $C_{\text{eff}}$ independently from a single current ring-down pulse.
+          </div>
+        </div>
+
+        <!-- Card 2: Microscopic Material Degradation & Delamination -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 text-sm font-bold mb-2">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+              <span>2. Foil Decoupling & Lead Micro-Crack Geometry</span>
+            </div>
+            <p class="text-xs text-gray-300 mb-3 leading-relaxed">
+              Capacitor units consist of segmented metallized polypropylene or ceramic dielectrics. Extreme shock waves cause:
+            </p>
+            <ul class="text-xs text-gray-400 space-y-2 list-disc list-inside mb-3">
+              <li><strong class="text-slate-200">Sector Disconnection:</strong> High mechanical vibration shatters schoopage end-spray bonds, isolating parallel sectors:
+                <div class="formula-box my-1.5">
+                  $$C_{\text{eff}} = \sum_{k=1}^{N_{\text{intact}}} C_k = N_{\text{intact}} \cdot C_{\text{sector}}$$
+                </div>
+              </li>
+              <li><strong class="text-slate-200">Inductance Loop Elongation:</strong> Lead fatigue and localized conductor necking force the high-frequency pulsed current around torn foil perimeters, altering parasitic magnetic path integral:
+                <div class="formula-box my-1.5">
+                  $$L_{\text{loop}} = \mu_0 \oint_{S} \frac{\mathbf{A} \cdot d\boldsymbol{\ell}}{I} \approx L_0 + \Delta L_{\text{path}} \left(\frac{N_{\text{failed}}}{N_{\text{total}}}\right)$$
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-800/80 text-[11px] font-mono text-cyan-400">
+            Observation: As $C$ drops, $L$ counter-intuitively rises due to elongated return paths.
+          </div>
+        </div>
+
+        <!-- Card 3: Diagnostic State Observer & Inversion Algorithm -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 text-sm font-bold mb-2">
+              <i data-lucide="binary" class="w-4 h-4"></i>
+              <span>3. Online System Identification Algorithm</span>
+            </div>
+            <p class="text-xs text-gray-300 mb-3 leading-relaxed">
+              On every percussive strike, high-speed Rogowski coils sample zero-crossings ($t_1, t_2$) and consecutive positive peak amplitudes ($I_1, I_2$):
+            </p>
+            <div class="formula-box">
+              $$\delta = \ln\left(\frac{I_1}{I_2}\right) = \alpha T_d = \frac{\pi R_{\text{esr}}}{\omega_d L_{\text{loop}}}, \quad T_d = 2(t_2 - t_1)$$
+            </div>
+            <p class="text-xs text-gray-400 my-2">
+              The observer software solves the closed-form dual parameter inversion:
+            </p>
+            <div class="formula-box">
+              $$L_{\text{loop}} = \frac{V_0}{I_1 \omega_d} \exp\left(-\frac{\delta}{2\pi} \arctan\left(\frac{2\pi}{\delta}\right)\right)$$
+            </div>
+            <div class="formula-box mt-2">
+              $$C_{\text{eff}} = \frac{1}{L_{\text{loop}} \left(\omega_d^2 + \left(\frac{\delta}{T_d}\right)^2\right)}$$
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-800/80 text-[11px] font-mono text-cyan-400">
+            Real-Time Metric: Solved in &lt;18 µs inside radiation-tolerant FPGA / DSP cores.
+          </div>
+        </div>
+
+        <!-- Card 4: Autonomous Overvoltage Suppression Control -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 text-sm font-bold mb-2">
+              <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              <span>4. Closed-Loop PRF Derating Failsafe</span>
+            </div>
+            <p class="text-xs text-gray-300 mb-3 leading-relaxed">
+              When sectors disconnect, the remaining capacitors absorb higher $dV/dt$ stresses. If pulse repetition frequency (PRF) is maintained, thermal avalanche causes total bank explosion:
+            </p>
+            <div class="formula-box">
+              $$P_{\text{loss}} = f_{\text{PRF}} \cdot E_{\text{pulse}} = f_{\text{PRF}} \left(\frac{1}{2} C_{\text{eff}} V_0^2\right)$$
+            </div>
+            <p class="text-xs text-gray-400 my-2">
+              To keep thermal dissipation below the critical dielectric breakdown limit $P_{\text{crit}}$, the CapBank controller automatically modulates driver frequency:
+            </p>
+            <div class="formula-box">
+              $$f_{\text{derated}} = f_{\text{nominal}} \cdot \left(\frac{C_{\text{eff}}}{C_{\text{nominal}}}\right)^2 \cdot \left(\frac{L_{\text{nominal}}}{L_{\text{loop}}}\right)$$
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+              This preserves penetration capability at reduced speed while preventing permanent hardware destruction.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-800/80 text-[11px] font-mono text-cyan-400">
+            Drill Longevity: Extends subsurface penetration lifespan by up to 14× in hostile cryo-rock.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: NASA SBIR/STTR PROPOSAL & HARDWARE TRANSITION                     -->
+    <!-- ========================================================================= -->
+    <div id="viewProposal" class="hidden space-y-6">
+
+      <!-- Executive Header -->
+      <div class="bg-gradient-to-r from-gray-900 via-[#0a1020] to-gray-900 border border-cyan-500/30 rounded-xl p-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-700/60">
+                NASA SBIR 2026 Phase I
+              </span>
+              <span class="text-xs text-gray-400 font-mono">Topic: TX08.02 Pulsed Power for Extreme Planetary Operations</span>
+            </div>
+            <h2 class="text-xl font-bold text-white mt-1">
+              CapBank: Real-Time Equivalent Inductance & Capacitance State Auditor for Subsurface Penetration
+            </h2>
+            <p class="text-xs text-gray-300 mt-1 max-w-3xl">
+              A software-defined acoustic and electromagnetic pulsed-power health management engine that audits capacitor bank integrity on every percussive drill cycle.
+            </p>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xs font-mono text-gray-400">TOTAL PHASE I BUDGET</div>
+            <div class="text-2xl font-black text-cyan-300 font-mono">$225,000</div>
+            <div class="text-[11px] text-gray-400 font-mono">Duration: 6 Months (TRL 3 → 5)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partner Allocation & Budget Structure -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Primary Contractor Allocation -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-gray-400">PRIME CONTRACTOR (70.0%)</span>
+            <span class="text-xs font-mono font-bold text-cyan-400">$157,500</span>
+          </div>
+          <h3 class="text-sm font-bold text-white">RFWave Technologies LLC</h3>
+          <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+            Lead software architecture, FPGA core firmware synthesis for sub-microsecond LC parameter inversion, adaptive PRF derating engine, and real-time telemetry GUI integration.
+          </p>
+          <ul class="text-xs text-gray-400 mt-3 space-y-1.5 font-mono">
+            <li>• Embedded State Observer algorithms</li>
+            <li>• Space-grade telemetry packaging</li>
+            <li>• Dual-sensor calibration models</li>
+          </ul>
+        </div>
+
+        <!-- STTR University Partner Allocation (Mandatory 30%) -->
+        <div class="bg-[#080c14] border border-cyan-800/40 rounded-xl p-5 bg-gradient-to-b from-[#091122] to-[#080c14]">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-cyan-300 font-semibold">STTR PARTNER (30.0%)</span>
+            <span class="text-xs font-mono font-bold text-cyan-300">$67,500</span>
+          </div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+            <span>Univ. of Central Florida (UCF)</span>
+            <span class="text-[10px] bg-cyan-900/60 text-cyan-200 px-1.5 py-0.5 rounded">CATER Labs</span>
+          </h3>
+          <p class="text-xs text-gray-300 mt-2 leading-relaxed">
+            Subcontracted under Dr. Jay Kapat / Center for Advanced Turbomachinery and Energy Research (CATER). Providing cryogenic vacuum chambers (77 K liquid nitrogen shroud) and high-G percussive shaker testing rigs.
+          </p>
+          <ul class="text-xs text-cyan-300/80 mt-3 space-y-1.5 font-mono text-[11px]">
+            <li>• 15,000g percussive shock simulator</li>
+            <li>• Cryo-vacuum regolith simulant drill rig</li>
+            <li>• Micro-CT metallized foil cross-sections</li>
+          </ul>
+        </div>
+
+        <!-- Mission Transition Target -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-gray-400">MISSION TRANSITION</span>
+            <span class="text-xs font-mono text-amber-400">NASA Phase II Target</span>
+          </div>
+          <h3 class="text-sm font-bold text-white">Artemis Subsurface Volatiles Drill</h3>
+          <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+            Directly targeted at the VIPER successor and CLPS (Commercial Lunar Payload Services) commercial lander drills penetrating up to 2 meters into Permanently Shadowed Regions (PSRs).
+          </p>
+          <div class="mt-4 pt-3 border-t border-gray-800 flex justify-between text-xs font-mono">
+            <span class="text-gray-400">Phase II Scale:</span>
+            <span class="text-white font-bold">$850k - $1.25M</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 6-Month Phase I Milestone Roadmap -->
+      <div class="bg-[#080c14] border border-gray-800 rounded-xl p-5">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i>
+          Phase I Technical Work Breakdown Schedule (Months 1–6)
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Month 1-2 -->
+          <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+            <div class="text-xs font-mono text-cyan-400 font-bold mb-1">M1 – M2: Milestone 1</div>
+            <h4 class="text-sm font-semibold text-white">Transient Ringing Kinetic Model</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+              Synthesize 3D electromagnetic finite-element models of multi-layer capacitor winding packs subjected to 10,000g axial percussive shocks at 95 K. Derive closed-form coupling equations between foil sector loss and parasitic loop inductance elongation.
+            </p>
+            <div class="mt-3 text-[11px] font-mono text-gray-400">Deliverable: Validated Simulation Framework</div>
+          </div>
+
+          <!-- Month 3 -->
+          <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+            <div class="text-xs font-mono text-cyan-400 font-bold mb-1">M3 – M4: Milestone 2</div>
+            <h4 class="text-sm font-semibold text-white">FPGA State Inversion Engine</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+              Program radiation-tolerant microsemi SmartFusion2 FPGA with pipelined integer division and logarithmic lookup table to extract $(C_{\text{eff}}, L_{\text{loop}})$ in &lt;18 µs post-trigger, benchmarking zero-drift across cryo-temperatures.
+            </p>
+            <div class="mt-3 text-[11px] font-mono text-gray-400">Deliverable: Bitstream & Hardware Bench Data</div>
+          </div>
+
+          <!-- Month 5 -->
+          <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+            <div class="text-xs font-mono text-cyan-400 font-bold mb-1">M5: Milestone 3</div>
+            <h4 class="text-sm font-semibold text-white">Cryogenic Chamber Test (UCF)</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+              Mount prototype 120 µF / 3.5 kV pulsed-power driver on UCF CATER liquid nitrogen percussion test stand. Fire 50,000 continuous percussive pulses into cryogenic basalt simulant while deliberately shearing foil sectors to verify autonomous detection.
+            </p>
+            <div class="mt-3 text-[11px] font-mono text-gray-400">Deliverable: Experimental Chamber Audit Report</div>
+          </div>
+
+          <!-- Month 6 -->
+          <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-800">
+            <div class="text-xs font-mono text-cyan-400 font-bold mb-1">M6: Milestone 4</div>
+            <h4 class="text-sm font-semibold text-white">Adaptive PRF Failsafe & Phase II Spec</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+              Demonstrate autonomous pulse frequency throttling under induced foil loss, successfully suppressing dielectric overvoltage below 3.5 kV limit and preventing bank destruction. Finalize Phase II space-flight flight qualification proposal.
+            </p>
+            <div class="mt-3 text-[11px] font-mono text-gray-400">Deliverable: Final NASA Technical Report + TRL 5 Demo</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: COMMERCIAL & NATIONWIDE ARR BREAKDOWN                             -->
+    <!-- ========================================================================= -->
+    <div id="viewARR" class="hidden space-y-6">
+
+      <!-- Executive Overview Banner -->
+      <div class="bg-[#080c14] border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-mono text-cyan-400 font-bold uppercase tracking-wider">Civil Commercial Market Opportunity</span>
+            <span class="bg-emerald-950 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-800">100% Civil & Clean Energy</span>
+          </div>
+          <h2 class="text-xl font-bold text-white mt-1">
+            Enterprise Pulsed-Power Bank Health SaaS & Embedded Driver Licensing
+          </h2>
+          <p class="text-xs text-gray-300 mt-1 max-w-3xl">
+            High-voltage pulsed power is expanding beyond aerospace into geothermal drilling, semiconductor manufacturing, and medical lithotripsy. CapBank provides the ubiquitous software layer preventing catastrophic capacitor bank explosions across 6 civil markets.
+          </p>
+        </div>
+        <div class="text-right shrink-0 bg-gray-900/80 p-4 rounded-lg border border-gray-800">
+          <div class="text-xs font-mono text-gray-400">TOTAL ADDRESSABLE CIVIL ARR</div>
+          <div class="text-3xl font-black text-emerald-400 font-mono mt-0.5">$218.4M</div>
+          <div class="text-[11px] text-gray-400 font-mono mt-1">Enterprise Multiple (10x): <span class="text-white font-bold">$2.18B Valuation</span></div>
+        </div>
+      </div>
+
+      <!-- ARR Distribution Table -->
+      <div class="bg-[#080c14] border border-gray-800 rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-cyan-400"></i>
+            Commercial ARR Distribution Across Civil Infrastructure
+          </h3>
+          <span class="text-xs font-mono text-gray-400">Software Runtime Licensing & Fleet Health SaaS</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-gray-900/70 text-gray-400 border-b border-gray-800 uppercase text-[10px]">
+              <tr>
+                <th class="p-3">Commercial Vertical</th>
+                <th class="p-3">Target Application</th>
+                <th class="p-3">Pricing Metric</th>
+                <th class="p-3">Nationwide Fleet Base</th>
+                <th class="p-3 text-right">Mature ARR</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800/60 text-gray-300">
+              <tr class="hover:bg-gray-900/40">
+                <td class="p-3 font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Deep Geothermal Drilling
+                </td>
+                <td class="p-3 text-gray-400">Ultra-deep plasma spallation & high-voltage percussive bits</td>
+                <td class="p-3">$14,500 / rig / month</td>
+                <td class="p-3">380 active advanced drilling rigs</td>
+                <td class="p-3 font-bold text-emerald-400 text-right">$66.1M</td>
+              </tr>
+              <tr class="hover:bg-gray-900/40">
+                <td class="p-3 font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Semiconductor EUV Lithography
+                </td>
+                <td class="p-3 text-gray-400">Laser-produced plasma (LPP) droplet pulsed-power sources</td>
+                <td class="p-3">$28,000 / tool / year</td>
+                <td class="p-3">1,450 domestic fab light-source modules</td>
+                <td class="p-3 font-bold text-emerald-400 text-right">$40.6M</td>
+              </tr>
+              <tr class="hover:bg-gray-900/40">
+                <td class="p-3 font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Mining & Tunnel Boring
+                </td>
+                <td class="p-3 text-gray-400">Non-explosive electric electro-hydraulic rock-shattering</td>
+                <td class="p-3">$6,200 / heavy excavator / year</td>
+                <td class="p-3">7,800 hydraulic breaker machines</td>
+                <td class="p-3 font-bold text-emerald-400 text-right">$48.3M</td>
+              </tr>
+              <tr class="hover:bg-gray-900/40">
+                <td class="p-3 font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Commercial Fusion Energy R&D
+                </td>
+                <td class="p-3 text-gray-400">Megajoule fast-discharge capacitor bank arrays (Commonwealth, Zap)</td>
+                <td class="p-3">$85,000 / facility / year</td>
+                <td class="p-3">220 private pilot plant bank arrays</td>
+                <td class="p-3 font-bold text-emerald-400 text-right">$18.7M</td>
+              </tr>
+              <tr class="hover:bg-gray-900/40">
+                <td class="p-3 font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Medical Electrohydraulic Lithotripsy
+                </td>
+                <td class="p-3 text-gray-400">Kidney stone shockwave pulsed spark generators</td>
+                <td class="p-3">$3,800 / surgical unit / year</td>
+                <td class="p-3">5,200 hospital lithotripters</td>
+                <td class="p-3 font-bold text-emerald-400 text-right">$19.8M</td>
+              </tr>
+              <tr class="hover:bg-gray-900/40">
+                <td class="p-3 font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Commercial Lunar & Asteroid Mining
+                </td>
+                <td class="p-3 text-gray-400">CLPS lander payloads, ice drills, regolith excavation rovers</td>
+                <td class="p-3">$125,000 / mission software package</td>
+                <td class="p-3">200 orbital/planetary flight missions</td>
+                <td class="p-3 font-bold text-emerald-400 text-right">$25.0M</td>
+              </tr>
+            </tbody>
+            <tfoot class="bg-gray-900/90 font-bold border-t border-gray-700 text-white">
+              <tr>
+                <td class="p-3" colspan="4">TOTAL NATIONWIDE ANNUAL RECURRING REVENUE (ARR)</td>
+                <td class="p-3 text-emerald-400 text-right text-sm">$218.4M</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Detailed Vertical Breakdown Cards (Physics in 1 Sentence & Why Incumbents Missed It) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <!-- Card 1: Geothermal -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 font-bold text-xs mb-2">
+              <i data-lucide="flame" class="w-4 h-4"></i>
+              <span>Deep Geothermal Spallation</span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2">
+              <strong class="text-white">Physics in 1 Sentence:</strong> Downhole acoustic reflection shocks induce localized mechanical strain in ultra-dense granitic basements that shifts discharge return inductance through thermal-expansion lead elongation.
+            </div>
+            <div class="text-xs text-gray-400 leading-relaxed bg-gray-950/60 p-2.5 rounded border border-gray-900">
+              <span class="text-amber-400 font-semibold">Why Others Missed This:</span> Legacy drillers rely on passive quarterly tear-downs or total downhole blowouts. They assumed capacitor failure was purely thermal dielectric breakdown, failing to realize internal metallization detachment occurs first as an identifiable resonance shift.
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-800 text-[11px] font-mono text-emerald-400">
+            ARR Contribution: $66.1M
+          </div>
+        </div>
+
+        <!-- Card 2: Semiconductor EUV Lithography -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 font-bold text-xs mb-2">
+              <i data-lucide="cpu" class="w-4 h-4"></i>
+              <span>Semiconductor EUV Sources</span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2">
+              <strong class="text-white">Physics in 1 Sentence:</strong> High-frequency 50 kHz tin-droplet laser excitation capacitor banks suffer sub-nanosecond skin-effect lead fatigue that degrades equivalent series inductance prior to complete dielectric punch-through.
+            </div>
+            <div class="text-xs text-gray-400 leading-relaxed bg-gray-950/60 p-2.5 rounded border border-gray-900">
+              <span class="text-amber-400 font-semibold">Why Others Missed This:</span> Fab operators monitor overall optical EUV lumen output; by the time optical drop is noticed, the capacitor module has already begun catastrophic avalanche arc discharge, forcing cleanroom shutdown.
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-800 text-[11px] font-mono text-emerald-400">
+            ARR Contribution: $40.6M
+          </div>
+        </div>
+
+        <!-- Card 3: Mining & Heavy Construction -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 font-bold text-xs mb-2">
+              <i data-lucide="mountain" class="w-4 h-4"></i>
+              <span>Eco-Friendly Mining Breakers</span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2">
+              <strong class="text-white">Physics in 1 Sentence:</strong> High-energy underwater spark discharge pulses shatter massive boulders via shockwaves whose instantaneous $di/dt$ reflects impedance mismatches directly back into the pulse driver.
+            </div>
+            <div class="text-xs text-gray-400 leading-relaxed bg-gray-950/60 p-2.5 rounded border border-gray-900">
+              <span class="text-amber-400 font-semibold">Why Others Missed This:</span> Heavy mining equipment operates in muddy, vibrating environments where telemetry was deemed impractical; CapBank performs auditing using existing current transducers already present inside the driver cabinet.
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-800 text-[11px] font-mono text-emerald-400">
+            ARR Contribution: $48.3M
+          </div>
+        </div>
+
+        <!-- Card 4: Fusion Energy -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 font-bold text-xs mb-2">
+              <i data-lucide="sun" class="w-4 h-4"></i>
+              <span>Commercial Fusion Pilot Banks</span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2">
+              <strong class="text-white">Physics in 1 Sentence:</strong> Megampere-scale magnetic compression coils experience dynamic Lorentz pinching forces that warp the discharge buswork geometry, inducing non-linear shifts in external loop inductance.
+            </div>
+            <div class="text-xs text-gray-400 leading-relaxed bg-gray-950/60 p-2.5 rounded border border-gray-900">
+              <span class="text-amber-400 font-semibold">Why Others Missed This:</span> Fusion startups focus on plasma diagnostic probes (interferometers, Rogowskis) rather than self-auditing the health of the 10,000 parallel capacitors feeding the coils.
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-800 text-[11px] font-mono text-emerald-400">
+            ARR Contribution: $18.7M
+          </div>
+        </div>
+
+        <!-- Card 5: Medical Lithotripsy -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 font-bold text-xs mb-2">
+              <i data-lucide="heart-pulse" class="w-4 h-4"></i>
+              <span>Medical Electrohydraulic Lithotripsy</span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2">
+              <strong class="text-white">Physics in 1 Sentence:</strong> Spark-gap pulse repetition causes localized electrode erosion and cable capacitance degradation that alters patient shockwave focal pressure.
+            </div>
+            <div class="text-xs text-gray-400 leading-relaxed bg-gray-950/60 p-2.5 rounded border border-gray-900">
+              <span class="text-amber-400 font-semibold">Why Others Missed This:</span> Hospitals replace spark tips purely on shot-count timers, frequently discarding good electrodes or running worn ones that deliver inadequate fragmenting pressure.
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-800 text-[11px] font-mono text-emerald-400">
+            ARR Contribution: $19.8M
+          </div>
+        </div>
+
+        <!-- Card 6: Planetary Space Exploration -->
+        <div class="bg-[#080c14] border border-gray-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2 text-cyan-400 font-bold text-xs mb-2">
+              <i data-lucide="compass" class="w-4 h-4"></i>
+              <span>Artemis & Commercial Space Flight</span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2">
+              <strong class="text-white">Physics in 1 Sentence:</strong> Extreme lunar diurnal swings (40 K to 390 K) alter dielectric permittivity $\varepsilon_r(T)$, while percussive drilling micro-cracks schoopage end connections.
+            </div>
+            <div class="text-xs text-gray-400 leading-relaxed bg-gray-950/60 p-2.5 rounded border border-gray-900">
+              <span class="text-amber-400 font-semibold">Why Others Missed This:</span> Traditional aerospace designs over-engineer bank mass by 400% to guarantee mission life. CapBank eliminates mass margin by providing real-time software-defined health monitoring.
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-800 text-[11px] font-mono text-emerald-400">
+            ARR Contribution: $25.0M
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Executive Investor & Enterprise Contact Callout -->
+      <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <h4 class="text-sm font-bold text-white">Executive Value Proposition</h4>
+          <p class="text-xs text-gray-400 mt-1 max-w-2xl">
+            "CapBank converts dumb, failure-prone pulsed-power hardware into self-healing, software-audited digital assets—saving planetary drilling missions and civil industrial plants hundreds of millions in catastrophic downhole failures."
+          </p>
+        </div>
+        <div class="shrink-0">
+          <a href="mailto:support@rfwavecode.com" class="px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs font-semibold flex items-center gap-2 transition shadow-lg glow-cyan">
+            <i data-lucide="mail" class="w-4 h-4"></i> Partner With Us: support@rfwavecode.com
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-800 bg-[#04060a] py-4 text-center text-xs font-mono text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <div>CapBank v3.4.2 | NASA SBIR/STTR Topic TX08.02 | RFWave Technologies & UCF CATER</div>
+      <div class="flex items-center space-x-4">
+        <span class="text-cyan-400">Single-File Architecture Validated</span>
+        <a href="mailto:support@rfwavecode.com" class="hover:text-cyan-300 transition">Contact Engineering</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT SIMULATION LOGIC, CHARTS, AND HARDWARE STATE ENGINE           -->
+  <!-- ========================================================================= -->
+  <script>
+    // Tab Switching Mapping Dictionary
+    const tabMapping = {
+      'sim': { viewId: 'viewSim', btnId: 'tabBtnSim' },
+      'physics': { viewId: 'viewPhysics', btnId: 'tabBtnPhysics' },
+      'proposal': { viewId: 'viewProposal', btnId: 'tabBtnProposal' },
+      'arr': { viewId: 'viewARR', btnId: 'tabBtnARR' }
+    };
+
+    function switchTab(tabKey) {
+      Object.keys(tabMapping).forEach(key => {
+        const item = tabMapping[key];
+        const viewEl = document.getElementById(item.viewId);
+        const btnEl = document.getElementById(item.btnId);
+        if (key === tabKey) {
+          viewEl.classList.remove('hidden');
+          btnEl.className = "px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-cyan-400 text-cyan-300 flex items-center gap-2 transition-colors whitespace-nowrap";
+        } else {
+          viewEl.classList.add('hidden');
+          btnEl.className = "px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-gray-200 flex items-center gap-2 transition-colors whitespace-nowrap";
+        }
+      });
+
+      // Rerender MathJax immediately
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+
+      // If returning to simulation tab, adjust canvas size
+      if (tabKey === 'sim') {
+        setTimeout(() => {
+          resizeCanvas();
+        }, 50);
+      }
+    }
+
+    // ==========================================
+    // SYSTEM PHYSICAL MODEL & SIMULATION STATE
+    // ==========================================
+    const NOMINAL_C = 120.0; // µF
+    const NOMINAL_L = 14.2;  // nH
+    const NOMINAL_PRF = 45.0; // Hz
+    const TOTAL_SECTORS = 12;
+
+    const state = {
+      // Dynamic Physical State
+      intactSectors: 12,
+      leadFatigueMultiplier: 1.0, // Multiplier for loop inductance L
+      capacitance: NOMINAL_C,     // µF
+      inductance: NOMINAL_L,      // nH
+      esr: 0.042,                 // Ohms
+      voltage: 2.5,               // kV
+      rockHardness: 180,          // MPa
+      cryoTemp: 110,              // Kelvin
+      prf: NOMINAL_PRF,           // Hz (Drill firing frequency)
+      autoDerateEnabled: true,
+      
+      // Real-time Ringing Measurements
+      ringingFreqKhz: 121.9,      // kHz
+      peakCurrentKa: 8.42,        // kA
+      terminalOvervoltageKv: 3.12,// kV
+      totalStrokes: 14280,
+      
+      // Telemetry History Arrays
+      historyTrajectory: [],      // [{x: C, y: L}]
+      historyTime: [],
+      historyPrf: [],
+      historyHealth: [],
+      
+      // Hardware Visuals
+      drillDepth: 180,            // visual pixel position
+      sparks: [],
+      vibrationOffset: 0
+    };
+
+    // Calculate baseline LC trajectory points
+    function recalculateLC() {
+      // Temperature effect on permittivity
+      const tempFactor = 1.0 + (state.cryoTemp - 110) * 0.00025;
+      
+      // Capacitance is proportional to intact sectors
+      state.capacitance = (state.intactSectors / TOTAL_SECTORS) * NOMINAL_C * tempFactor;
+      
+      // Loop inductance rises with lead fatigue and missing sectors (elongated return path)
+      const sectorPathFactor = 1.0 + ((TOTAL_SECTORS - state.intactSectors) / TOTAL_SECTORS) * 0.65;
+      state.inductance = NOMINAL_L * state.leadFatigueMultiplier * sectorPathFactor;
+
+      // Resonant angular frequency: w0 = 1 / sqrt(L * C)
+      // C in µF (1e-6), L in nH (1e-9) -> L*C in 1e-15 s^2
+      const LC_product = (state.inductance * 1e-9) * (state.capacitance * 1e-6);
+      const w0 = 1.0 / Math.sqrt(LC_product);
+      const f0_khz = (w0 / (2 * Math.PI)) / 1000.0;
+      state.ringingFreqKhz = f0_khz;
+
+      // Damping alpha = R / (2L)
+      const alpha = state.esr / (2 * state.inductance * 1e-9);
+      
+      // Peak current I_peak = V0 * sqrt(C/L) * exp(...)
+      const surgeImpedance = Math.sqrt((state.inductance * 1e-9) / (state.capacitance * 1e-6));
+      state.peakCurrentKa = ( (state.voltage * 1000) / surgeImpedance * 0.88 ) / 1000;
+
+      // Terminal overvoltage spike V_terminal = V0 + L * di/dt peak
+      const di_dt_ga = (state.peakCurrentKa * 1000 * w0) / 1e9; // GigaAmps per second
+      state.diDtGa = di_dt_ga;
+      state.terminalOvervoltageKv = state.voltage * (1.0 + (state.inductance / NOMINAL_L) * 0.28);
+
+      // Autonomous Derating Logic
+      const healthRatio = state.capacitance / NOMINAL_C;
+      const inductanceExcess = state.inductance / NOMINAL_L;
+
+      if (state.autoDerateEnabled) {
+        // Derate PRF quadratic with capacitance drop and inversely with excess inductance
+        const derateFactor = Math.pow(healthRatio, 2.0) * (1.0 / inductanceExcess);
+        state.prf = Math.max(10.0, NOMINAL_PRF * derateFactor);
+      } else {
+        // Run unmitigated (hazardous)
+        state.prf = NOMINAL_PRF;
+      }
+
+      // Update Phase-Space Trajectory History (capped to 24 points)
+      state.historyTrajectory.push({
+        x: parseFloat(state.capacitance.toFixed(2)),
+        y: parseFloat(state.inductance.toFixed(2))
+      });
+      if (state.historyTrajectory.length > 28) {
+        state.historyTrajectory.shift();
+      }
+
+      updateTelemetryUI();
+    }
+
+    // ==========================================
+    // FAULT INJECTION & CONTROL ACTIONS
+    // ==========================================
+    function injectFoilDecoupling() {
+      if (state.intactSectors > 4) {
+        state.intactSectors -= 2;
+        triggerTransientSparkEffect();
+        recalculateLC();
+        checkHazardState();
+      }
+    }
+
+    function injectLeadFatigue() {
+      state.leadFatigueMultiplier += 0.25;
+      triggerTransientSparkEffect();
+      recalculateLC();
+      checkHazardState();
+    }
+
+    function restoreBankModules() {
+      state.intactSectors = TOTAL_SECTORS;
+      state.leadFatigueMultiplier = 1.0;
+      recalculateLC();
+      checkHazardState();
+    }
+
+    function checkHazardState() {
+      const banner = document.getElementById('observerNotification');
+      const msg = document.getElementById('observerMessage');
+      const statusChip = document.getElementById('chipBankStatus');
+      const canvasModStatus = document.getElementById('canvasModuleStatus');
+
+      const isAnomalous = (state.intactSectors < TOTAL_SECTORS) || (state.leadFatigueMultiplier > 1.15);
+
+      if (isAnomalous) {
+        banner.classList.remove('hidden');
+        statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span> FOIL LOSS / DERATING`;
+        statusChip.className = "text-rose-400 font-semibold flex items-center gap-1";
+        
+        canvasModStatus.innerText = `${state.intactSectors}/${TOTAL_SECTORS} Film Sectors Intact (ALERT)`;
+        canvasModStatus.className = "text-rose-400 font-semibold";
+
+        if (state.autoDerateEnabled) {
+          msg.innerHTML = `Internal foil sector decoupling detected. Equivalent bank capacitance dropped to <strong class="text-rose-200">${state.capacitance.toFixed(1)} µF</strong> with loop inductance surge to <strong class="text-rose-200">${state.inductance.toFixed(1)} nH</strong>. Autonomous controller derated PRF from 45 Hz down to <strong class="text-amber-300 font-bold">${state.prf.toFixed(1)} Hz</strong> to avert terminal arcover failure.`;
+        } else {
+          msg.innerHTML = `<span class="text-red-400 font-bold">WARNING: AUTONOMOUS DERATING DISABLED.</span> High pulse repetition frequency will subject remaining sectors to catastrophic thermal runaway ($V_{\\text{peak}} = ${state.terminalOvervoltageKv.toFixed(2)}$ kV).`;
+        }
+      } else {
+        banner.classList.add('hidden');
+        statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> BALANCED`;
+        statusChip.className = "text-emerald-400 font-semibold flex items-center gap-1";
+        
+        canvasModStatus.innerText = `${TOTAL_SECTORS}/${TOTAL_SECTORS} Film Sectors Intact`;
+        canvasModStatus.className = "text-cyan-300";
+      }
+    }
+
+    function triggerTransientSparkEffect() {
+      for (let i = 0; i < 20; i++) {
+        state.sparks.push({
+          x: 200 + (Math.random() - 0.5) * 60,
+          y: 140 + (Math.random() - 0.5) * 30,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 1.0,
+          color: Math.random() > 0.4 ? '#06b6d4' : '#f43f5e'
+        });
+      }
+    }
+
+    // ==========================================
+    // UI REFRESH
+    // ==========================================
+    function updateTelemetryUI() {
+      document.getElementById('chipCapValue').innerText = `${state.capacitance.toFixed(1)} µF`;
+      document.getElementById('chipIndValue').innerText = `${state.inductance.toFixed(1)} nH`;
+      document.getElementById('chipFreqValue').innerText = `${state.ringingFreqKhz.toFixed(1)} kHz`;
+      document.getElementById('chipPrfValue').innerText = `${state.prf.toFixed(1)} Hz`;
+
+      document.getElementById('statIpeak').innerText = `${state.peakCurrentKa.toFixed(2)} kA`;
+      
+      const vPeakEl = document.getElementById('statVpeak');
+      vPeakEl.innerHTML = `${state.terminalOvervoltageKv.toFixed(2)} kV ${state.terminalOvervoltageKv > 3.6 ? '<span class="text-rose-400 font-bold">(CRITICAL)</span>' : '<span class="text-gray-500 font-normal text-[10px]">(Safe)</span>'}`;
+      if (state.terminalOvervoltageKv > 3.6) {
+        vPeakEl.className = "text-sm font-bold text-rose-400 mt-0.5 animate-pulse";
+      } else {
+        vPeakEl.className = "text-sm font-bold text-emerald-400 mt-0.5";
+      }
+
+      document.getElementById('statDiDt').innerText = `${state.diDtGa.toFixed(2)} GA/s`;
+      document.getElementById('currentCoordDisplay').innerText = `(${state.capacitance.toFixed(1)} µF, ${state.inductance.toFixed(1)} nH)`;
+
+      const periodUs = (1.0 / (state.ringingFreqKhz * 1000)) * 1e6;
+      document.getElementById('valOscPeriod').innerText = `${periodUs.toFixed(2)} µs`;
+
+      const healthPct = Math.round((state.capacitance / NOMINAL_C) * 100);
+      document.getElementById('valHealthPercent').innerText = `${healthPct}%`;
+      document.getElementById('valTotalStrokes').innerText = state.totalStrokes.toLocaleString();
+
+      const pulseJoules = Math.round(0.5 * (state.capacitance * 1e-6) * Math.pow(state.voltage * 1000, 2));
+      document.getElementById('canvasImpactJoules').innerText = `${pulseJoules} J/pulse`;
+    }
+
+    // ==========================================
+    // CHART.JS TELEMETRY PLOTS
+    // ==========================================
+    let phaseSpaceChart, waveformChart, deratingChart;
+
+    function initCharts() {
+      // 1. Diagnostic Phase-Space Chart: X = Capacitance (µF), Y = Inductance (nH)
+      const ctxPhase = document.getElementById('phaseSpaceChart').getContext('2d');
+      
+      // Nominal corridor coordinates
+      const baselinePoints = [];
+      for (let c = 40; c <= 140; c += 10) {
+        // baseline curve where L rises slightly if C drops
+        baselinePoints.push({ x: c, y: NOMINAL_L + (140 - c) * 0.04 });
+      }
+
+      // Hazard boundary curve
+      const hazardLine = [];
+      for (let c = 40; c <= 140; c += 10) {
+        hazardLine.push({ x: c, y: 19.5 - (c - 40) * 0.025 });
+      }
+
+      phaseSpaceChart = new Chart(ctxPhase, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Live Bank State',
+              data: [{ x: state.capacitance, y: state.inductance }],
+              backgroundColor: '#06b6d4',
+              borderColor: '#ffffff',
+              borderWidth: 2,
+              pointRadius: 7,
+              pointHoverRadius: 9,
+              order: 1
+            },
+            {
+              label: 'Trajectory History',
+              data: state.historyTrajectory,
+              showLine: true,
+              borderColor: 'rgba(6, 182, 212, 0.4)',
+              borderWidth: 1.5,
+              borderDash: [3, 3],
+              pointRadius: 2.5,
+              backgroundColor: 'rgba(6, 182, 212, 0.2)',
+              order: 2
+            },
+            {
+              label: 'Nominal LC Design Corridor',
+              data: baselinePoints,
+              showLine: true,
+              borderColor: 'rgba(16, 185, 129, 0.7)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: false,
+              order: 3
+            },
+            {
+              label: 'Dielectric Overvoltage Hazard Threshold',
+              data: hazardLine,
+              showLine: true,
+              borderColor: 'rgba(239, 68, 68, 0.7)',
+              borderWidth: 2,
+              borderDash: [5, 4],
+              pointRadius: 0,
+              fill: {
+                target: { value: 30 },
+                above: 'rgba(239, 68, 68, 0.08)'
+              },
+              order: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Effective Capacitance C (µF) [Foil Intactness]',
+                color: '#94a3b8',
+                font: { family: 'JetBrains Mono', size: 10 }
+              },
+              min: 30,
+              max: 140,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 9 } }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Equivalent Loop Inductance L (nH)',
+                color: '#94a3b8',
+                font: { family: 'JetBrains Mono', size: 10 }
+              },
+              min: 10,
+              max: 28,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 9 } }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#030712',
+              titleFont: { family: 'JetBrains Mono', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 10 },
+              borderColor: '#374151',
+              borderWidth: 1,
+              callbacks: {
+                label: (ctx) => `(${ctx.parsed.x} µF, ${ctx.parsed.y} nH)`
+              }
+            }
+          }
+        }
+      });
+
+      // 2. High-Speed Transient Waveform Chart
+      const ctxWave = document.getElementById('waveformChart').getContext('2d');
+      waveformChart = new Chart(ctxWave, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Discharge Current I(t) [kA]',
+              data: [],
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6, 182, 212, 0.1)',
+              borderWidth: 1.8,
+              pointRadius: 0,
+              fill: true,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Terminal Voltage V(t) [kV]',
+              data: [],
+              borderColor: '#f59e0b',
+              borderWidth: 1.5,
+              borderDash: [3, 2],
+              pointRadius: 0,
+              fill: false,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time (µs)',
+                color: '#94a3b8',
+                font: { family: 'JetBrains Mono', size: 10 }
+              },
+              grid: { color: 'rgba(51, 65, 85, 0.25)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 8 }
+            },
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Current (kA)', color: '#06b6d4', font: { family: 'JetBrains Mono', size: 9 } },
+              grid: { color: 'rgba(51, 65, 85, 0.25)' },
+              ticks: { color: '#06b6d4', font: { family: 'JetBrains Mono', size: 8 } }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'Voltage (kV)', color: '#f59e0b', font: { family: 'JetBrains Mono', size: 9 } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#f59e0b', font: { family: 'JetBrains Mono', size: 8 } }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: '#cbd5e1', font: { family: 'JetBrains Mono', size: 9 }, boxWidth: 12 }
+            }
+          }
+        }
+      });
+
+      // 3. Adaptive PRF Derating History Chart
+      const ctxDerate = document.getElementById('deratingChart').getContext('2d');
+      
+      // Pre-fill initial historical points
+      for (let i = 0; i < 20; i++) {
+        state.historyTime.push(`-${20 - i}s`);
+        state.historyPrf.push(NOMINAL_PRF);
+        state.historyHealth.push(100);
+      }
+
+      deratingChart = new Chart(ctxDerate, {
+        type: 'line',
+        data: {
+          labels: state.historyTime,
+          datasets: [
+            {
+              label: 'Driver Repetition PRF (Hz)',
+              data: state.historyPrf,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: true,
+              yAxisID: 'yPrf'
+            },
+            {
+              label: 'Capacitor Bank Health (%)',
+              data: state.historyHealth,
+              borderColor: '#10b981',
+              borderWidth: 1.8,
+              borderDash: [4, 3],
+              pointRadius: 0,
+              yAxisID: 'yHealth'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.2)' },
+              ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 8 }, maxTicksLimit: 6 }
+            },
+            yPrf: {
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              max: 60,
+              title: { display: true, text: 'PRF (Hz)', color: '#a78bfa', font: { family: 'JetBrains Mono', size: 9 } },
+              grid: { color: 'rgba(51, 65, 85, 0.2)' },
+              ticks: { color: '#a78bfa', font: { family: 'JetBrains Mono', size: 8 } }
+            },
+            yHealth: {
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              max: 120,
+              title: { display: true, text: 'Health (%)', color: '#34d399', font: { family: 'JetBrains Mono', size: 9 } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#34d399', font: { family: 'JetBrains Mono', size: 8 } }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: '#cbd5e1', font: { family: 'JetBrains Mono', size: 9 }, boxWidth: 12 }
+            }
+          }
+        }
+      });
+
+      updateWaveformChart();
+    }
+
+    function updateWaveformChart() {
+      if (!waveformChart) return;
+
+      const labels = [];
+      const currentData = [];
+      const voltageData = [];
+
+      const durationUs = 25.0; // 25 microseconds window
+      const steps = 120;
+      const dt = durationUs / steps;
+
+      const w_rad_us = 2 * Math.PI * (state.ringingFreqKhz / 1000.0); // rad per microsecond
+      const alpha_us = (state.esr / (2 * state.inductance * 1e-9)) * 1e-6; // decay per µs
+      const iPeak = state.peakCurrentKa;
+      const v0 = state.voltage;
+
+      for (let i = 0; i < steps; i++) {
+        const t = i * dt;
+        labels.push(t.toFixed(1));
+
+        // Underdamped LC current response
+        const envelope = Math.exp(-alpha_us * t);
+        const i_t = iPeak * envelope * Math.sin(w_rad_us * t);
+        currentData.push(parseFloat(i_t.toFixed(2)));
+
+        // Terminal voltage with inductive kick
+        const v_t = v0 * envelope * (Math.cos(w_rad_us * t) + (alpha_us / w_rad_us) * Math.sin(w_rad_us * t));
+        voltageData.push(parseFloat(v_t.toFixed(2)));
+      }
+
+      waveformChart.data.labels = labels;
+      waveformChart.data.datasets[0].data = currentData;
+      waveformChart.data.datasets[1].data = voltageData;
+      waveformChart.update('none');
+    }
+
+    // ==========================================
+    // HTML5 CANVAS HARDWARE ANIMATION LOOP
+    // ==========================================
+    const canvas = document.getElementById('drillCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || 600;
+      const h = rect.height || 290;
+      
+      canvas.width = w * window.devicePixelRatio;
+      canvas.height = h * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
+    let strokeCycleTimer = 0;
+    let dischargeFlash = 0;
+
+    function renderHardwareCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || 600;
+      const h = rect.height || 290;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Draw Regolith Ground Substrate (Planetary Strata)
+      const groundY = h * 0.46;
+
+      // Dark vacuum sky / drill housing top
+      ctx.fillStyle = '#03050a';
+      ctx.fillRect(0, 0, w, groundY);
+
+      // Deep Cryo Basalt Regolith
+      const gradRegolith = ctx.createLinearGradient(0, groundY, 0, h);
+      gradRegolith.addColorStop(0, '#111827');
+      gradRegolith.addColorStop(0.3, '#0c1322');
+      gradRegolith.addColorStop(1, '#05070d');
+      ctx.fillStyle = gradRegolith;
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      // Regolith stratigraphy lines
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let y = groundY + 25; y < h; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y + (Math.sin(y) * 8));
+        ctx.stroke();
+      }
+
+      // Regolith Surface Horizon
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY);
+      for (let x = 0; x <= w; x += 20) {
+        ctx.lineTo(x, groundY + Math.sin(x * 0.05) * 2.5);
+      }
+      ctx.stroke();
+
+      // 2. Percussive Drill Borehole & Bit Assembly
+      const drillX = w * 0.32;
+      const bitTopY = 30;
+      const vib = (Math.random() - 0.5) * (dischargeFlash > 0 ? 6.0 : 1.2);
+      const drillTipY = groundY + 65 + (dischargeFlash > 0 ? 5 : 0);
+
+      // Borehole cavity
+      ctx.fillStyle = '#020408';
+      ctx.fillRect(drillX - 28, groundY, 56, drillTipY - groundY + 15);
+      ctx.strokeStyle = '#1e293b';
+      ctx.strokeRect(drillX - 28, groundY, 56, drillTipY - groundY + 15);
+
+      // Drill Percussive Shaft (Tungsten Carbide / Titanium Alloy)
+      const gradShaft = ctx.createLinearGradient(drillX - 16, 0, drillX + 16, 0);
+      gradShaft.addColorStop(0, '#334155');
+      gradShaft.addColorStop(0.5, '#94a3b8');
+      gradShaft.addColorStop(1, '#1e293b');
+      ctx.fillStyle = gradShaft;
+      ctx.fillRect(drillX - 14 + vib, bitTopY, 28, drillTipY - bitTopY);
+
+      // Drill Chuck / Piezo Stator Housing
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.fillRect(drillX - 24 + vib, bitTopY + 20, 48, 55);
+      ctx.strokeRect(drillX - 24 + vib, bitTopY + 20, 48, 55);
+      
+      // Piezo Stack Layers Indicator
+      ctx.fillStyle = '#06b6d4';
+      for (let pz = bitTopY + 26; pz < bitTopY + 70; pz += 8) {
+        ctx.fillRect(drillX - 20 + vib, pz, 40, 3.5);
+      }
+
+      // Hardened Cutting Bit & Diamond Chisel Tip
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath();
+      ctx.moveTo(drillX - 22 + vib, drillTipY - 5);
+      ctx.lineTo(drillX + 22 + vib, drillTipY - 5);
+      ctx.lineTo(drillX + vib, drillTipY + 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.stroke();
+
+      // Rock Shatter Cracks at Bit Tip
+      if (dischargeFlash > 0) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let a = 0; a < 6; a++) {
+          const angle = (a / 6) * Math.PI + 0.1;
+          const len = 15 + Math.random() * 25;
+          ctx.moveTo(drillX + vib, drillTipY + 12);
+          ctx.lineTo(drillX + vib + Math.cos(angle) * len, drillTipY + 12 + Math.sin(angle) * len);
+        }
+        ctx.stroke();
+
+        // Flash Glow at Tip
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
+        ctx.beginPath();
+        ctx.arc(drillX + vib, drillTipY + 12, 35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Right Side: High-Voltage Capacitor Bank Array Schematic
+      const bankX = w * 0.62;
+      const bankY = 28;
+      const bankW = w * 0.34;
+      const bankH = 145;
+
+      // Outer Cryo-Housing Enclosure
+      ctx.fillStyle = 'rgba(8, 12, 20, 0.9)';
+      ctx.strokeStyle = state.intactSectors < TOTAL_SECTORS ? '#f43f5e' : '#1e293b';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(bankX, bankY, bankW, bankH);
+      ctx.fillRect(bankX, bankY, bankW, bankH);
+
+      // Bank Label & Health
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px "JetBrains Mono"';
+      ctx.fillText('PULSED CAP BANK MODULE (12 SECTORS)', bankX + 8, bankY + 16);
+
+      // Draw 12 Capacitor Metallized Film Sectors (2 rows of 6)
+      const secCols = 6;
+      const secRows = 2;
+      const pad = 6;
+      const cellW = (bankW - (secCols + 1) * pad) / secCols;
+      const cellH = 40;
+
+      let sectorIdx = 0;
+      for (let r = 0; r < secRows; r++) {
+        for (let c = 0; c < secCols; c++) {
+          sectorIdx++;
+          const sx = bankX + pad + c * (cellW + pad);
+          const sy = bankY + 28 + r * (cellH + pad);
+
+          const isIntact = sectorIdx <= state.intactSectors;
+
+          if (isIntact) {
+            // Intact Film Sector (Glowing Cyan/Teal)
+            ctx.fillStyle = dischargeFlash > 0 ? '#22d3ee' : '#0e7490';
+            ctx.fillRect(sx, sy, cellW, cellH);
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx, sy, cellW, cellH);
+
+            // Foil internal metallization stripes
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            for (let fx = sx + 3; fx < sx + cellW; fx += 5) {
+              ctx.beginPath();
+              ctx.moveTo(fx, sy + 3);
+              ctx.lineTo(fx, sy + cellH - 3);
+              ctx.stroke();
+            }
+          } else {
+            // Decoupled / Damaged Sector (Broken Red Wire)
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+            ctx.fillRect(sx, sy, cellW, cellH);
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx, sy, cellW, cellH);
+
+            // X indicating broken schoopage contact
+            ctx.strokeStyle = '#f43f5e';
+            ctx.beginPath();
+            ctx.moveTo(sx + 4, sy + 4);
+            ctx.lineTo(sx + cellW - 4, sy + cellH - 4);
+            ctx.moveTo(sx + cellW - 4, sy + 4);
+            ctx.lineTo(sx + 4, sy + cellH - 4);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Connecting Low-Inductance Stripline Busbar
+      ctx.strokeStyle = state.leadFatigueMultiplier > 1.2 ? '#f59e0b' : '#38bdf8';
+      ctx.lineWidth = state.leadFatigueMultiplier > 1.2 ? 2.5 : 3.5;
+      ctx.beginPath();
+      // Busbar leaves bank and feeds piezo chuck
+      ctx.moveTo(bankX, bankY + 70);
+      ctx.lineTo(drillX + 24, bankY + 70);
+      ctx.lineTo(drillX + 24, bitTopY + 35);
+      ctx.stroke();
+
+      // Return Busbar Loop (Illustrating Path Elongation)
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(drillX - 24, bitTopY + 55);
+      ctx.lineTo(bankX - 25, bitTopY + 55);
+      if (state.leadFatigueMultiplier > 1.2) {
+        // Distorted longer inductive return path
+        ctx.lineTo(bankX - 15, bankY + 115);
+        ctx.lineTo(bankX, bankY + 115);
+      } else {
+        ctx.lineTo(bankX, bitTopY + 55);
+      }
+      ctx.stroke();
+
+      // 4. Draw Animated Particles / Shock Sparks
+      for (let i = state.sparks.length - 1; i >= 0; i--) {
+        const p = state.sparks[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05;
+
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(1, p.life * 3), 0, Math.PI * 2);
+        ctx.fill();
+
+        if (p.life <= 0) {
+          state.sparks.splice(i, 1);
+        }
+      }
+
+      if (dischargeFlash > 0) {
+        dischargeFlash -= 0.15;
+      }
+    }
+
+    // ==========================================
+    // SIMULATION STEP LOOP
+    // ==========================================
+    let tickCount = 0;
+
+    function step() {
+      tickCount++;
+
+      // Trigger percussive stroke based on PRF
+      const ticksPerStroke = Math.max(2, Math.round(50.0 / state.prf));
+      if (tickCount % ticksPerStroke === 0) {
+        dischargeFlash = 1.0;
+        state.totalStrokes += 1;
+
+        // Visual spark burst at drill tip
+        const rect = canvas.getBoundingClientRect();
+        const drillX = rect.width * 0.32;
+        const groundY = rect.height * 0.46;
+        for (let i = 0; i < 6; i++) {
+          state.sparks.push({
+            x: drillX,
+            y: groundY + 75,
+            vx: (Math.random() - 0.5) * 7,
+            vy: -Math.random() * 5 - 2,
+            life: 1.0,
+            color: '#38bdf8'
+          });
+        }
+
+        // Strobe indicator on UI
+        const pulseBadge = document.getElementById('dischargePulseIndicator');
+        pulseBadge.className = "px-1.5 py-0.5 rounded text-white bg-cyan-600 font-bold border border-cyan-400";
+        setTimeout(() => {
+          pulseBadge.className = "px-1.5 py-0.5 rounded text-emerald-300 bg-emerald-950 border border-emerald-700";
+        }, 120);
+
+        // Update stroke counter display occasionally
+        if (state.totalStrokes % 10 === 0) {
+          document.getElementById('valTotalStrokes').innerText = state.totalStrokes.toLocaleString();
+        }
+      }
+
+      // Render Canvas
+      renderHardwareCanvas();
+
+      // Throttled Chart Updates (every 10 ticks ~ 400ms)
+      if (tickCount % 10 === 0) {
+        // Update live dot in phase space
+        if (phaseSpaceChart) {
+          phaseSpaceChart.data.datasets[0].data = [{ x: state.capacitance, y: state.inductance }];
+          phaseSpaceChart.data.datasets[1].data = state.historyTrajectory;
+          phaseSpaceChart.update('none');
+        }
+
+        // Update derating history
+        if (deratingChart) {
+          state.historyPrf.push(state.prf);
+          state.historyHealth.push(Math.round((state.capacitance / NOMINAL_C) * 100));
+          if (state.historyPrf.length > 25) {
+            state.historyPrf.shift();
+            state.historyHealth.shift();
+          }
+          deratingChart.data.datasets[0].data = state.historyPrf;
+          deratingChart.data.datasets[1].data = state.historyHealth;
+          deratingChart.update('none');
+        }
+
+        updateWaveformChart();
+      }
+    }
+
+    // ==========================================
+    // CONTROLS & EVENT LISTENERS
+    // ==========================================
+    function setupEventListeners() {
+      // Sliders
+      const sliderHardness = document.getElementById('sliderHardness');
+      const labelHardness = document.getElementById('labelHardness');
+      sliderHardness.addEventListener('input', (e) => {
+        state.rockHardness = parseFloat(e.target.value);
+        let rockType = "Soft Sandstone";
+        if (state.rockHardness > 100) rockType = "Anorthosite";
+        if (state.rockHardness > 170) rockType = "Lunar Basalt";
+        if (state.rockHardness > 260) rockType = "Dense Ilmenite Ore";
+        labelHardness.innerText = `${state.rockHardness} MPa (${rockType})`;
+        recalculateLC();
+      });
+
+      const sliderVoltage = document.getElementById('sliderVoltage');
+      const labelVoltage = document.getElementById('labelVoltage');
+      sliderVoltage.addEventListener('input', (e) => {
+        state.voltage = parseFloat(e.target.value);
+        labelVoltage.innerText = `${state.voltage.toFixed(2)} kV`;
+        recalculateLC();
+      });
+
+      const sliderTemp = document.getElementById('sliderTemp');
+      const labelTemp = document.getElementById('labelTemp');
+      sliderTemp.addEventListener('input', (e) => {
+        state.cryoTemp = parseFloat(e.target.value);
+        const cVal = (state.cryoTemp - 273.15).toFixed(0);
+        labelTemp.innerText = `${state.cryoTemp} K (${cVal}°C)`;
+        recalculateLC();
+      });
+
+      const toggleAutoDerate = document.getElementById('toggleAutoDerate');
+      toggleAutoDerate.addEventListener('change', (e) => {
+        state.autoDerateEnabled = e.target.checked;
+        recalculateLC();
+        checkHazardState();
+      });
+
+      // Window Resize Listener for Canvas
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+      });
+    }
+
+    // ==========================================
+    // INITIALIZATION ON WINDOW LOAD
+    // ==========================================
+    window.onload = function() {
+      // Lucide Icons
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+
+      // Initial Canvas setup
+      resizeCanvas();
+
+      // Recalculate baseline values
+      recalculateLC();
+
+      // Initialize Charts
+      initCharts();
+
+      // Setup inputs
+      setupEventListeners();
+
+      // Start animation loop (~25 FPS)
+      setInterval(step, 40);
+    };
+  </script>
+</body>
+</html>
